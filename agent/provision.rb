@@ -16,7 +16,7 @@ module MCollective
                 certname = PluginManager["facts_plugin"].get_fact("fqdn")
                 certname = config.identity unless certname
 
-                @puppetcert = config.pluginconf["provision.certfile"] || "/var/lib/puppet/ssl/certs/#{certname.downcase}.pem"
+                @puppetcert = config.pluginconf["provision.certfile"] || "/var/lib/puppet/ssl/certs/#{certname}.pem"
                 @lockfile = config.pluginconf["provision.lockfile"] || "/tmp/mcollective_provisioner_lock"
                 @puppetd = config.pluginconf["provision.puppetd"] || "/usr/sbin/puppetd"
             end
