@@ -18,6 +18,7 @@ module MCollective
 
                 @puppetcert = config.pluginconf["provision.certfile"] || "/var/lib/puppet/ssl/certs/#{certname}.pem"
                 @lockfile = config.pluginconf["provision.lockfile"] || "/tmp/mcollective_provisioner_lock"
+                @flagfile = config.pluginconf["provision.flagfile"] || "/tmp/mcollective_provisioner_complete"
                 @puppetd = config.pluginconf["provision.puppetd"] || "/usr/sbin/puppetd"
             end
 
@@ -52,19 +53,29 @@ module MCollective
                 reply[:output] = %x[#{@puppetd} --test --environment bootstrap --color=none --summarize]
                 reply[:exitcode] = $?.exitstatus
 
-                fail "Puppet returned #{reply[:exitcode]}" if reply[:exitcode] != 2
+                fail "Puppet returned #{reply[:exitcode]}" if reply[:exitcode] == 1
             end
 
             # does a normal puppet run
             action "run_puppet" do
-                reply[:output] = %x[#{@puppetd} --test --color=none --summarize]
+                reply[:output] = %x[#{@puppetd}]
                 reply[:exitcode] = $?.exitstatus
 
-                fail "Puppet returned #{reply[:exitcode]}" if reply[:exitcode] != 2
+                fail "Puppet returned #{reply[:exitcode]}" if reply[:exitcode] == 1
             end
 
             action "has_cert" do
                 reply[:has_cert] = has_cert?
+            end
+
+            action "flag_deploy" do
+                reply.fail! "Already flagged" if flagged?
+
+                File.open(@flagfile, "w") {|f| f.puts Time.now}
+
+                reply[:flagfile] = @flagfile
+
+                reply.fail! "Failed to flag the process as complete" unless flagged?
             end
 
             action "lock_deploy" do
@@ -75,6 +86,10 @@ module MCollective
                 reply[:lockfile] = @lockfile
 
                 reply.fail! "Failed to lock the install" unless locked?
+            end
+
+            action "is_flagged" do
+                reply[:flagged] = flagged?
             end
 
             action "is_locked" do
@@ -94,6 +109,10 @@ module MCollective
 
             def locked?
                 File.exist?(@lockfile)
+            end
+
+            def flagged?
+                File.exist?(@flagfile)
             end
         end
     end

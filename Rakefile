@@ -5,7 +5,7 @@ require 'rake/clean'
 require 'find'
 
 PROJ_DOC_TITLE = "MCollective Server Provisioner"
-PROJ_VERSION = "1.0.0"
+PROJ_VERSION = "1.0.2"
 PROJ_RELEASE = "1"
 PROJ_NAME = "mcprovision"
 PROJ_RPM_NAMES = [PROJ_NAME]

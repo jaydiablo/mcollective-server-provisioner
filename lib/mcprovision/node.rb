@@ -37,6 +37,12 @@ module MCProvision
             result[:data][:has_cert]
         end
 
+        def provisioned?
+            result = request("is_flagged")
+
+            result[:data][:flagged]
+        end
+
         # sets the ip of the puppet master host using the
         # set_puppet_host action on the node
         def set_puppet_host(ipaddress)
@@ -56,6 +62,12 @@ module MCProvision
             result = request("bootstrap_puppet")
 
             check_puppet_output(result[:data][:output].split("\n"))
+        end
+
+        # sets a flag on the node that provisioning is complete
+        def flag
+            MCProvision.info("Flagging that the provision has been completed")
+            request("flag_deploy")
         end
 
         # Do the final run of the client by calling run_puppet

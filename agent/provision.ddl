@@ -73,3 +73,14 @@ action "unlock_deploy", :description => "Unlock the deploy" do
            :display_as => "Unlocked"
 end
 
+action "is_flagged", :description => "Determine if the node has been provisioned alreade" do
+    output :flagged,
+           :description => "Is the node provisioned",
+           :display_as => "Provisioned"
+end
+
+action "flag_deploy", :description => "Flag the node as provisioned" do
+    output :flagfile,
+           :description => "The file that got created",
+           :display_as => "Flag file"
+end

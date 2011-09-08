@@ -12,6 +12,7 @@ steps:
   puppet_final_run: true
   unlock: true
   notify: false
+  flag: true
 master:
   criteria:
   - ec2_placement_region
