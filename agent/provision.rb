@@ -18,8 +18,8 @@ module MCollective
 
                 @puppetcert = config.pluginconf["provision.certfile"] || "/var/lib/puppet/ssl/certs/#{certname}.pem"
                 @lockfile = config.pluginconf["provision.lockfile"] || "/tmp/mcollective_provisioner_lock"
-                @flagfile = config.pluginconf["provision.flagfile"] || "/tmp/mcollective_provisioner_complete"
                 @puppetd = config.pluginconf["provision.puppetd"] || "/usr/sbin/puppetd"
+                @fact_add = config.pluginconf["provision.fact_add"] || "/usr/bin/fact-add"
             end
 
             action "set_puppet_host" do
@@ -68,14 +68,16 @@ module MCollective
                 reply[:has_cert] = has_cert?
             end
 
-            action "flag_deploy" do
-                reply.fail! "Already flagged" if flagged?
+            action "fact_mod" do
+                validate :fact, :value
 
-                File.open(@flagfile, "w") {|f| f.puts Time.now}
+                reply[:output] = %x[#{@fact_add} #{request[:fact]} #{request[:value]}]
+		reply[:exitcode] = $?.exitstatus
 
-                reply[:flagfile] = @flagfile
-
-                reply.fail! "Failed to flag the process as complete" unless flagged?
+                if reply[:exitcode] != 0
+                    File.unlink(@lockfile)
+                    fail "Fact returned #{reply[:exitcode]}"
+                end
             end
 
             action "lock_deploy" do
@@ -86,10 +88,6 @@ module MCollective
                 reply[:lockfile] = @lockfile
 
                 reply.fail! "Failed to lock the install" unless locked?
-            end
-
-            action "is_flagged" do
-                reply[:flagged] = flagged?
             end
 
             action "is_locked" do
@@ -109,10 +107,6 @@ module MCollective
 
             def locked?
                 File.exist?(@lockfile)
-            end
-
-            def flagged?
-                File.exist?(@flagfile)
             end
         end
     end

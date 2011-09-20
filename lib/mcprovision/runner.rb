@@ -67,38 +67,34 @@ module MCProvision
             steps = @config.settings["steps"].keys.select{|s| @config.settings["steps"][s] }
             MCProvision.info("Provisioning #{node.hostname} / #{node_inventory[:facts][node_ipaddress_fact]} with steps #{steps.join ' '}")
 
-            unless node.provisioned? 
 
-                chosen_master, master_inventory = pick_master_from(@config.settings["master"]["criteria"], node_inventory[:facts])
+            chosen_master, master_inventory = pick_master_from(@config.settings["master"]["criteria"], node_inventory[:facts])
 
-                raise "Could not determine master ip address from fact #{master_ipaddress_fact}" unless master_inventory[:facts].include?(master_ipaddress_fact)
-                master_ip = master_inventory[:facts][master_ipaddress_fact]
+            raise "Could not determine master ip address from fact #{master_ipaddress_fact}" unless master_inventory[:facts].include?(master_ipaddress_fact)
+            master_ip = master_inventory[:facts][master_ipaddress_fact]
 
-                MCProvision.info("Provisioning node against #{chosen_master.hostname} / #{master_ip}")
+            MCProvision.info("Provisioning node against #{chosen_master.hostname} / #{master_ip}")
 
-                node.lock if @config.settings["steps"]["lock"]
+            node.lock if @config.settings["steps"]["lock"]
 
-                node.set_puppet_host(master_ip) if @config.settings["steps"]["set_puppet_hostname"]
+            node.set_puppet_host(master_ip) if @config.settings["steps"]["set_puppet_hostname"]
 
-                # Only do certificate management if the node is clean and doesnt already have a cert
-                unless node.has_cert?
-                    @master.clean_cert(node.hostname.downcase) if @config.settings["steps"]["clean_node_certname"]
+            # Only do certificate management if the node is clean and doesnt already have a cert
+            unless node.has_cert?
+                @master.clean_cert(node.hostname.downcase) if @config.settings["steps"]["clean_node_certname"]
 
-                    node.send_csr if @config.settings["steps"]["send_node_csr"]
+                node.send_csr if @config.settings["steps"]["send_node_csr"]
 
-                    @master.sign(node.hostname.downcase) if @config.settings["steps"]["sign_node_csr"]
-                else
-                    MCProvision.info("Skipping SSL certificate management for node - already has a cert")
-                end
-
-                node.bootstrap if @config.settings["steps"]["puppet_bootstrap_stage"]
-                node.run_puppet if @config.settings["steps"]["puppet_final_run"]
-                node.unlock if @config.settings["steps"]["unlock"]
-                node.flag if @config.settings["steps"]["flag"]
-                @notifier.notify("Provisioned #{node.hostname} against #{chosen_master.hostname}", "New Node") if @config.settings["steps"]["notify"]
+                @master.sign(node.hostname.downcase) if @config.settings["steps"]["sign_node_csr"]
             else
-                MCProvision.warn("Skipping provisioning of #{node.hostname}, Node has already been provisioned")
+                MCProvision.info("Skipping SSL certificate management for node - already has a cert")
             end
+
+            node.bootstrap if @config.settings["steps"]["puppet_bootstrap_stage"]
+            node.run_puppet if @config.settings["steps"]["puppet_final_run"]
+            node.unlock if @config.settings["steps"]["unlock"]
+            node.flag if @config.settings["steps"]["flag"]
+            @notifier.notify("Provisioned #{node.hostname} against #{chosen_master.hostname}", "New Node") if @config.settings["steps"]["notify"]
         end
 
         private

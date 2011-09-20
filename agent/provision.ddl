@@ -73,14 +73,28 @@ action "unlock_deploy", :description => "Unlock the deploy" do
            :display_as => "Unlocked"
 end
 
-action "is_flagged", :description => "Determine if the node has been provisioned alreade" do
-    output :flagged,
-           :description => "Is the node provisioned",
-           :display_as => "Provisioned"
-end
+action "fact_mod", :description => "Modify a Fact on the Node" do
+    input :fact,
+        :prompt => "Fact",
+        :description => "Fact Name",
+        :type => :string,
+        :validation => '.',
+        :optional => false,
+        :maxlength => 90
 
-action "flag_deploy", :description => "Flag the node as provisioned" do
-    output :flagfile,
-           :description => "The file that got created",
-           :display_as => "Flag file"
+    input :value,
+        :prompt => "Value",
+        :description => "Value Name",
+        :type => :string,
+        :validation => '.',
+        :optional => false,
+        :maxlength => 90
+
+    output :output,
+        :description => "fact_mod Output",
+        :display_as => "Output"
+
+    output :exitcode,
+        :description => "fact_mod Exit Code",
+        :display_as => "Exit Code"
 end
