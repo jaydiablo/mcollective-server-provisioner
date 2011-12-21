@@ -1,3 +1,5 @@
+require "yaml"
+
 module MCollective
     module Agent
         class Provision<RPC::Agent
@@ -20,6 +22,7 @@ module MCollective
                 @lockfile = config.pluginconf["provision.lockfile"] || "/tmp/mcollective_provisioner_lock"
                 @puppetd = config.pluginconf["provision.puppetd"] || "/usr/sbin/puppetd"
                 @fact_add = config.pluginconf["provision.fact_add"] || "/usr/bin/fact-add"
+                @fact_yaml = config.pluginconf["provision.fact_yaml"] || "/etc/mcollective/facts.yaml"
             end
 
             action "set_puppet_host" do
@@ -71,8 +74,19 @@ module MCollective
             action "fact_mod" do
                 validate :fact, :value
 
+                # Store in fact.yaml as well
+                facts = YAML::load(File.open(@fact_yaml))
+                if !facts.is_a?(Hash)
+                    facts = Hash.new
+                end
+                facts[request[:fact]] = request[:value]
+                # Write facts to yaml file
+                File.open(@fact_yaml, "w") do |f|
+                    f.write(facts.to_yaml)
+                end
+                
                 reply[:output] = %x[#{@fact_add} #{request[:fact]} #{request[:value]}]
-		reply[:exitcode] = $?.exitstatus
+		        reply[:exitcode] = $?.exitstatus
 
                 if reply[:exitcode] != 0
                     File.unlink(@lockfile)
