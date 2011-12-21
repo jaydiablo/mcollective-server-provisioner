@@ -5,7 +5,11 @@ module MCProvision::Util
 
         filter.split(" ").each do |f|
             if f =~ /^(.+?)=(.+)/
-                result["fact"] << {:fact => $1, :value => $2}
+                if MCollective::Util.method(:has_fact?).arity == 2
+                    result["fact"] << {:fact => $1, :value => $2}
+                else
+                    result["fact"] << {:fact => $1, :value => $2, :operator => "=="}
+                end
             else
                 result["cf_class"] << f
             end
